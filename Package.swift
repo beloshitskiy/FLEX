@@ -1,4 +1,4 @@
-// swift-tools-version:5.3
+// swift-tools-version:5.9
 
 import PackageDescription
 
@@ -7,13 +7,7 @@ enum FLEXBuildOptions {
     static let silenceWarnings = false
 }
 
-#if swift(>=5.9)
-let platforms: [PackageDescription.SupportedPlatform] = [.iOS(.v12)]
-#elseif swift(>=5.7)
-let platforms: [PackageDescription.SupportedPlatform] = [.iOS(.v11)]
-#else
-let platforms: [PackageDescription.SupportedPlatform] = [.iOS(.v10)]
-#endif
+let platforms: [PackageDescription.SupportedPlatform] = [.iOS(.v15)]
 
 let package = Package(
     name: "FLEX",

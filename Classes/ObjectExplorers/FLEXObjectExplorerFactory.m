@@ -177,7 +177,11 @@ static NSMutableDictionary<id<NSCopying>, Class> *classesToRegisteredSections = 
         case FLEXGlobalsRowApplication:
             return [self explorerViewControllerForObject:UIApplication.sharedApplication];
         case FLEXGlobalsRowMainScreen:
-            return [self explorerViewControllerForObject:UIScreen.mainScreen];
+        {
+            UIWindowScene *scene = FLEXUtility.activeScene;
+            UIScreen *screen = scene ? scene.screen : nil;
+            return [self explorerViewControllerForObject:screen];
+        }
         case FLEXGlobalsRowCurrentDevice:
             return [self explorerViewControllerForObject:UIDevice.currentDevice];
         case FLEXGlobalsRowPasteboard:

@@ -9,15 +9,7 @@
 #import "FLEXColor.h"
 #import "FLEXUtility.h"
 
-#define FLEXDynamicColor(dynamic, static) ({ \
-    UIColor *c; \
-    if (@available(iOS 13.0, *)) { \
-        c = [UIColor dynamic]; \
-    } else { \
-        c = [UIColor static]; \
-    } \
-    c; \
-});
+#define FLEXDynamicColor(dynamic, static) [UIColor dynamic]
 
 @implementation FLEXColor
 
@@ -85,15 +77,7 @@
 #pragma mark - UI Element Colors
 
 + (UIColor *)tintColor {
-    #if FLEX_AT_LEAST_IOS13_SDK
-    if (@available(iOS 13.0, *)) {
-        return UIColor.systemBlueColor;
-    } else {
-        return UIApplication.sharedApplication.keyWindow.tintColor;
-    }
-    #else
-    return UIApplication.sharedApplication.keyWindow.tintColor;
-    #endif
+    return UIColor.systemBlueColor;
 }
 
 + (UIColor *)scrollViewBackgroundColor {

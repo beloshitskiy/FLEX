@@ -122,20 +122,20 @@
     const CGFloat kSquareDimension = 5.0;
     CGSize squareSize = CGSizeMake(kSquareDimension, kSquareDimension);
     CGSize imageSize = CGSizeMake(2.0 * kSquareDimension, 2.0 * kSquareDimension);
-    
-    UIGraphicsBeginImageContextWithOptions(imageSize, YES, UIScreen.mainScreen.scale);
-    
-    [UIColor.whiteColor setFill];
-    UIRectFill(CGRectMake(0, 0, imageSize.width, imageSize.height));
-    
-    [UIColor.grayColor setFill];
-    UIRectFill(CGRectMake(squareSize.width, 0, squareSize.width, squareSize.height));
-    UIRectFill(CGRectMake(0, squareSize.height, squareSize.width, squareSize.height));
-    
-    UIImage *image = UIGraphicsGetImageFromCurrentImageContext();
-    UIGraphicsEndImageContext();
-    
-    return image;
+
+    UIGraphicsImageRendererFormat *format = [UIGraphicsImageRendererFormat defaultFormat];
+    format.scale = FLEXScreenScale();
+    format.opaque = YES;
+    UIGraphicsImageRenderer *renderer = [[UIGraphicsImageRenderer alloc]
+        initWithSize:imageSize format:format];
+    return [renderer imageWithActions:^(UIGraphicsImageRendererContext *ctx) {
+        [UIColor.whiteColor setFill];
+        UIRectFill(CGRectMake(0, 0, imageSize.width, imageSize.height));
+
+        [UIColor.grayColor setFill];
+        UIRectFill(CGRectMake(squareSize.width, 0, squareSize.width, squareSize.height));
+        UIRectFill(CGRectMake(0, squareSize.height, squareSize.width, squareSize.height));
+    }];
 }
 
 @end

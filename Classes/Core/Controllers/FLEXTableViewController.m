@@ -96,11 +96,7 @@ CGFloat const kFLEXDebounceForExpensiveIO = 0.5;
         self.searchController.searchBar.placeholder = @"Filter";
         self.searchController.searchResultsUpdater = (id)self;
         self.searchController.delegate = (id)self;
-        if (@available(iOS 9.1, *)) {
-            self.searchController.obscuresBackgroundDuringPresentation = NO;
-        } else {
-            self.searchController.dimsBackgroundDuringPresentation = NO;
-        }
+        self.searchController.obscuresBackgroundDuringPresentation = NO;
         self.searchController.hidesNavigationBarDuringPresentation = NO;
         /// Not necessary in iOS 13; remove this when iOS 13 is the minimum deployment target
         self.searchController.searchBar.delegate = self;
@@ -549,7 +545,7 @@ static UITextField *kDummyTextField = nil;
     }
     
     kDummyTextField.inputAccessoryView = self.searchController.searchBar.inputAccessoryView;
-    [UIApplication.sharedApplication.keyWindow addSubview:kDummyTextField];
+    [FLEXUtility.appKeyWindow addSubview:kDummyTextField];
     [kDummyTextField becomeFirstResponder];
 }
 
@@ -586,17 +582,9 @@ static UITextField *kDummyTextField = nil;
 #pragma mark UISearchControllerDelegate
 
 - (void)willPresentSearchController:(UISearchController *)searchController {
-    // Manually show cancel button for < iOS 13
-    if (!@available(iOS 13, *) && self.automaticallyShowsSearchBarCancelButton) {
-        [searchController.searchBar setShowsCancelButton:YES animated:YES];
-    }
 }
 
 - (void)willDismissSearchController:(UISearchController *)searchController {
-    // Manually hide cancel button for < iOS 13
-    if (!@available(iOS 13, *) && self.automaticallyShowsSearchBarCancelButton) {
-        [searchController.searchBar setShowsCancelButton:NO animated:YES];
-    }
 }
 
 
