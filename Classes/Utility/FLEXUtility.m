@@ -32,34 +32,40 @@ BOOL FLEXConstructorsShouldRun(void) {
     #endif
 }
 
+CGFloat FLEXScreenScale(void) {
+    for (UIScene *scene in UIApplication.sharedApplication.connectedScenes) {
+        if ([scene isKindOfClass:[UIWindowScene class]]) {
+            return ((UIWindowScene *)scene).screen.scale;
+        }
+    }
+    return 2.0;
+}
+
 @implementation FLEXUtility
 
 + (UIWindow *)appKeyWindow {
-    // First, check UIApplication.keyWindow
-    FLEXWindow *window = (id)UIApplication.sharedApplication.keyWindow;
-    if (window) {
-        if ([window isKindOfClass:[FLEXWindow class]]) {
-            return window.previousKeyWindow;
+    // Try each connected window scene's key window (iOS 15+)
+    for (UIScene *scene in UIApplication.sharedApplication.connectedScenes) {
+        if (![scene isKindOfClass:[UIWindowScene class]]) continue;
+        UIWindow *keyWindow = ((UIWindowScene *)scene).keyWindow;
+        if (!keyWindow) continue;
+
+        if ([keyWindow isKindOfClass:[FLEXWindow class]]) {
+            return ((FLEXWindow *)keyWindow).previousKeyWindow;
         }
-        
-        return window;
+        return keyWindow;
     }
-    
-    // As of iOS 13, UIApplication.keyWindow does not return nil,
-    // so this is more of a safeguard against it returning nil in the future.
-    //
-    // Also, these are obviously not all FLEXWindows; FLEXWindow is used
-    // so we can call window.previousKeyWindow without an ugly cast
-    for (FLEXWindow *window in UIApplication.sharedApplication.windows) {
+
+    // Fallback: iterate all scene windows
+    for (UIWindow *window in FLEXUtility.allSceneWindows) {
         if (window.isKeyWindow) {
             if ([window isKindOfClass:[FLEXWindow class]]) {
-                return window.previousKeyWindow;
+                return ((FLEXWindow *)window).previousKeyWindow;
             }
-            
             return window;
         }
     }
-    
+
     return nil;
 }
 
@@ -71,8 +77,18 @@ BOOL FLEXConstructorsShouldRun(void) {
             return (UIWindowScene *)scene;
         }
     }
-    
+
     return nil;
+}
+
++ (NSArray<UIWindow *> *)allSceneWindows {
+    NSMutableArray<UIWindow *> *result = [NSMutableArray new];
+    for (UIScene *scene in UIApplication.sharedApplication.connectedScenes) {
+        if ([scene isKindOfClass:[UIWindowScene class]]) {
+            [result addObjectsFromArray:((UIWindowScene *)scene).windows];
+        }
+    }
+    return result;
 }
 
 + (UIViewController *)topViewControllerInWindow:(UIWindow *)window {
@@ -136,26 +152,26 @@ BOOL FLEXConstructorsShouldRun(void) {
     if (CGRectIsEmpty(view.bounds)) {
         return [UIImage new];
     }
-    
+
     CGSize viewSize = view.bounds.size;
-    UIGraphicsBeginImageContextWithOptions(viewSize, NO, 0.0);
-    [view drawViewHierarchyInRect:CGRectMake(0, 0, viewSize.width, viewSize.height) afterScreenUpdates:YES];
-    UIImage *previewImage = UIGraphicsGetImageFromCurrentImageContext();
-    UIGraphicsEndImageContext();
-    return previewImage;
+    UIGraphicsImageRenderer *renderer = [[UIGraphicsImageRenderer alloc]
+        initWithSize:viewSize];
+    return [renderer imageWithActions:^(UIGraphicsImageRendererContext *ctx) {
+        [view drawViewHierarchyInRect:CGRectMake(0, 0, viewSize.width, viewSize.height)
+                   afterScreenUpdates:YES];
+    }];
 }
 
 + (UIImage *)previewImageForLayer:(CALayer *)layer {
     if (CGRectIsEmpty(layer.bounds)) {
         return nil;
     }
-    
-    UIGraphicsBeginImageContextWithOptions(layer.bounds.size, NO, 0.0);
-    CGContextRef imageContext = UIGraphicsGetCurrentContext();
-    [layer renderInContext:imageContext];
-    UIImage *previewImage = UIGraphicsGetImageFromCurrentImageContext();
-    UIGraphicsEndImageContext();
-    return previewImage;
+
+    UIGraphicsImageRenderer *renderer = [[UIGraphicsImageRenderer alloc]
+        initWithSize:layer.bounds.size];
+    return [renderer imageWithActions:^(UIGraphicsImageRendererContext *ctx) {
+        [layer renderInContext:ctx.CGContext];
+    }];
 }
 
 + (NSString *)detailDescriptionForView:(UIView *)view {
@@ -164,13 +180,12 @@ BOOL FLEXConstructorsShouldRun(void) {
 
 + (UIImage *)circularImageWithColor:(UIColor *)color radius:(CGFloat)radius {
     CGFloat diameter = radius * 2.0;
-    UIGraphicsBeginImageContextWithOptions(CGSizeMake(diameter, diameter), NO, 0.0);
-    CGContextRef imageContext = UIGraphicsGetCurrentContext();
-    CGContextSetFillColorWithColor(imageContext, color.CGColor);
-    CGContextFillEllipseInRect(imageContext, CGRectMake(0, 0, diameter, diameter));
-    UIImage *circularImage = UIGraphicsGetImageFromCurrentImageContext();
-    UIGraphicsEndImageContext();
-    return circularImage;
+    UIGraphicsImageRenderer *renderer = [[UIGraphicsImageRenderer alloc]
+        initWithSize:CGSizeMake(diameter, diameter)];
+    return [renderer imageWithActions:^(UIGraphicsImageRendererContext *ctx) {
+        CGContextSetFillColorWithColor(ctx.CGContext, color.CGColor);
+        CGContextFillEllipseInRect(ctx.CGContext, CGRectMake(0, 0, diameter, diameter));
+    }];
 }
 
 + (UIColor *)hierarchyIndentPatternColor {
@@ -179,25 +194,22 @@ BOOL FLEXConstructorsShouldRun(void) {
     dispatch_once(&onceToken, ^{
         UIImage *indentationPatternImage = FLEXResources.hierarchyIndentPattern;
         patternColor = [UIColor colorWithPatternImage:indentationPatternImage];
-        if (@available(iOS 13.0, *)) {
-            // Create a dark mode version
-            UIGraphicsBeginImageContextWithOptions(
-                indentationPatternImage.size, NO, indentationPatternImage.scale
-            );
+        // Create a dark mode version
+        UIGraphicsImageRenderer *renderer = [[UIGraphicsImageRenderer alloc]
+            initWithSize:indentationPatternImage.size];
+        UIImage *darkModePatternImage = [renderer imageWithActions:^(UIGraphicsImageRendererContext *ctx) {
             [FLEXColor.iconColor set];
             [indentationPatternImage drawInRect:CGRectMake(
                 0, 0, indentationPatternImage.size.width, indentationPatternImage.size.height
             )];
-            UIImage *darkModePatternImage = UIGraphicsGetImageFromCurrentImageContext();
-            UIGraphicsEndImageContext();
+        }];
 
-            // Create dynamic color provider
-            patternColor = [UIColor colorWithDynamicProvider:^UIColor *(UITraitCollection *traitCollection) {
-                return (traitCollection.userInterfaceStyle == UIUserInterfaceStyleLight
-                        ? [UIColor colorWithPatternImage:indentationPatternImage]
-                        : [UIColor colorWithPatternImage:darkModePatternImage]);
-            }];
-        }
+        // Create dynamic color provider
+        patternColor = [UIColor colorWithDynamicProvider:^UIColor *(UITraitCollection *traitCollection) {
+            return (traitCollection.userInterfaceStyle == UIUserInterfaceStyleLight
+                    ? [UIColor colorWithPatternImage:indentationPatternImage]
+                    : [UIColor colorWithPatternImage:darkModePatternImage]);
+        }];
     });
 
     return patternColor;

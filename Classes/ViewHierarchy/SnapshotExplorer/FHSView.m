@@ -93,17 +93,16 @@
     }
 
     CGSize size = view.bounds.size;
-    CGFloat minUnit = 1.f / UIScreen.mainScreen.scale;
+    CGFloat minUnit = 1.f / FLEXScreenScale();
 
-    // Every drawn view must not have 0 width or height
     CGSize minsize = CGSizeMake(MAX(size.width, minUnit), MAX(size.height, minUnit));
     CGRect minBounds = CGRectMake(0, 0, minsize.width, minsize.height);
 
-    UIGraphicsBeginImageContextWithOptions(minsize, NO, 0);
-    [view drawViewHierarchyInRect:minBounds afterScreenUpdates:YES];
-    UIImage *image = UIGraphicsGetImageFromCurrentImageContext();
-    UIGraphicsEndImageContext();
-    return image;
+    UIGraphicsImageRenderer *renderer = [[UIGraphicsImageRenderer alloc]
+        initWithSize:minsize];
+    return [renderer imageWithActions:^(UIGraphicsImageRendererContext *ctx) {
+        [view drawViewHierarchyInRect:minBounds afterScreenUpdates:YES];
+    }];
 }
 
 /// Recursively hides all views that may be obscuring the given view and collects them

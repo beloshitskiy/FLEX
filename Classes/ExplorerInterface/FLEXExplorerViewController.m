@@ -749,7 +749,7 @@ typedef NS_ENUM(NSUInteger, FLEXExplorerMode) {
     // Select in the window that would handle the touch, but don't just use the result of
     // hitTest:withEvent: so we can still select views with interaction disabled.
     // Default to the the application's key window if none of the windows want the touch.
-    UIWindow *windowForSelection = UIApplication.sharedApplication.keyWindow;
+    UIWindow *windowForSelection = FLEXUtility.appKeyWindow;
     for (UIWindow *window in FLEXUtility.allWindows.reverseObjectEnumerator) {
         // Ignore the explorer's own window.
         if (window != self.view.window) {
@@ -1037,7 +1037,7 @@ typedef NS_ENUM(NSUInteger, FLEXExplorerMode) {
 - (BOOL)handleDownArrowKeyPressed {
     if (self.currentMode == FLEXExplorerModeMove) {
         CGRect frame = self.selectedView.frame;
-        frame.origin.y += 1.0 / UIScreen.mainScreen.scale;
+        frame.origin.y += 1.0 / self.traitCollection.displayScale;
         self.selectedView.frame = frame;
     } else if (self.currentMode == FLEXExplorerModeSelect && self.viewsAtTapPoint.count > 0) {
         NSInteger selectedViewIndex = [self.viewsAtTapPoint indexOfObject:self.selectedView];
@@ -1047,14 +1047,14 @@ typedef NS_ENUM(NSUInteger, FLEXExplorerMode) {
     } else {
         return NO;
     }
-    
+
     return YES;
 }
 
 - (BOOL)handleUpArrowKeyPressed {
     if (self.currentMode == FLEXExplorerModeMove) {
         CGRect frame = self.selectedView.frame;
-        frame.origin.y -= 1.0 / UIScreen.mainScreen.scale;
+        frame.origin.y -= 1.0 / self.traitCollection.displayScale;
         self.selectedView.frame = frame;
     } else if (self.currentMode == FLEXExplorerModeSelect && self.viewsAtTapPoint.count > 0) {
         NSInteger selectedViewIndex = [self.viewsAtTapPoint indexOfObject:self.selectedView];
@@ -1064,25 +1064,25 @@ typedef NS_ENUM(NSUInteger, FLEXExplorerMode) {
     } else {
         return NO;
     }
-    
+
     return YES;
 }
 
 - (BOOL)handleRightArrowKeyPressed {
     if (self.currentMode == FLEXExplorerModeMove) {
         CGRect frame = self.selectedView.frame;
-        frame.origin.x += 1.0 / UIScreen.mainScreen.scale;
+        frame.origin.x += 1.0 / self.traitCollection.displayScale;
         self.selectedView.frame = frame;
         return YES;
     }
-    
+
     return NO;
 }
 
 - (BOOL)handleLeftArrowKeyPressed {
     if (self.currentMode == FLEXExplorerModeMove) {
         CGRect frame = self.selectedView.frame;
-        frame.origin.x -= 1.0 / UIScreen.mainScreen.scale;
+        frame.origin.x -= 1.0 / self.traitCollection.displayScale;
         self.selectedView.frame = frame;
         return YES;
     }

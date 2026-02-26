@@ -26,6 +26,8 @@
 @property (nonatomic, readonly, class) NSArray<UIWindow *> *allWindows;
 /// The first active \c UIWindowScene of the app.
 @property (nonatomic, readonly, class) UIWindowScene *activeScene API_AVAILABLE(ios(13.0));
+/// All windows from all connected window scenes.
+@property (nonatomic, readonly, class) NSArray<UIWindow *> *allSceneWindows;
 /// @return top-most view controller of the given window
 + (UIViewController *)topViewControllerInWindow:(UIWindow *)window;
 
